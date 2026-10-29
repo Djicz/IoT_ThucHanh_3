@@ -1,215 +1,244 @@
-# Thực hành buổi 3 lập trình Python với CoAP
+# Thực hành buổi 3 lập trình Python với giao thức CoAP
 
-Bài thực hành gồm ba hệ thống Client–Server dùng CoAP qua UDP: gửi thông điệp, giám sát cảm biến và điều khiển đèn có Observe. Mã nguồn được kiểm thử trên Windows với Python **3.12.14** và **aiocoap 0.4.17**. Không cần MQTT Broker hoặc RabbitMQ.
+## 1. Thông tin nhóm thực hiện
 
-## Thông tin sinh viên hoặc nhóm
+| STT | Họ và tên | Mã sinh viên |
+|---|---|---|
+| 1 | Lê Huy Đức | B23DCCN169 |
+| 2 | Trương Khánh Hợp | B23DCCN351 |
 
-| Nội dung | Thông tin |
-|---|---|
-| Họ tên thành viên | **Cần điền thông tin thật trước khi nộp** |
-| Mã sinh viên | **Cần điền thông tin thật trước khi nộp** |
-| Lớp / nhóm | **Cần điền thông tin thật trước khi nộp** |
-| Repository GitHub | [Djicz/IoT_ThucHanh_3](https://github.com/Djicz/IoT_ThucHanh_3) |
+Repository nộp bài: [Djicz/IoT_ThucHanh_3](https://github.com/Djicz/IoT_ThucHanh_3).
 
-Client bài 1 nhận thông tin thật qua bàn phím hoặc `--name` và `--student-id`. Dữ liệu `TEST001 / Sinh vien kiem thu` trong log chỉ dùng kiểm thử.
-
-## Cấu trúc mã nguồn
+## 2. Cấu trúc thư mục
 
 ```text
 CoAP_Lab/
-  bai1/
-    coap_server_bai1.py
-    coap_client_bai1.py
-  bai2/
-    sensor_server_bai2.py
-    monitor_client_bai2.py
-  bai3/
-    light_server_bai3.py
-    light_controller_bai3.py
-    light_monitor_bai3.py
-  common.py
-  requirements.txt
-  README.md
-  evidence/                 # Log chạy thực tế và kết quả kiểm thử
-  tests/verify_lab.py       # Kiểm thử tích hợp qua UDP
+|
+|-- bai1/
+|   |-- coap_server_bai1.py
+|   |-- coap_client_bai1.py
+|
+|-- bai2/
+|   |-- sensor_server_bai2.py
+|   |-- monitor_client_bai2.py
+|
+|-- bai3/
+|   |-- light_server_bai3.py
+|   |-- light_controller_bai3.py
+|   |-- light_monitor_bai3.py
+|
+|-- README.md
 ```
 
-`common.py` dùng chung cấu hình, transport UDP IPv4 phù hợp Windows, xử lý timeout và đóng context. Khi nộp phải giữ file này cùng cả ba thư mục bài tập.
+Mỗi file Python là một chương trình chạy độc lập. Minh chứng chạy chương trình được ghi ở mục 7 của README.
 
-## Cài đặt và môi trường
+## 3. Phiên bản Python và thư viện sử dụng
 
-Mở PowerShell tại thư mục `CoAP_Lab`. Với máy đã cài Python 3.10 trở lên:
+- Python 3.12.14, đã chạy thử trên Windows.
+- Thư viện ngoài: aiocoap 0.4.17.
+- Các thư viện chuẩn dùng trong mã nguồn gồm `asyncio`, `argparse`, `json`, `datetime`, `random`, `time`, `math`, `csv`, `pathlib`, `contextlib`; không cần cài thêm.
+- Giao thức CoAP qua UDP, cổng mặc định 5683. Không cần MQTT Broker hoặc RabbitMQ.
+
+## 4. Cách cài đặt môi trường
+
+Cài Python 3.10 trở lên, chọn thêm Python vào PATH khi cài trên Windows. Tải hoặc clone repository, mở terminal tại thư mục `CoAP_Lab` rồi chạy:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+python --version
+python -m pip install aiocoap==0.4.17
 ```
 
-Nếu hệ thống dùng Python Launcher, thay `python` bằng `py -3` ở lệnh tạo môi trường. Không cần kích hoạt môi trường hoặc thay đổi ExecutionPolicy; gọi thẳng `python.exe` như dưới đây.
+Nếu máy dùng Python Launcher, có thể thay `python` bằng `py -3` trong các lệnh cài đặt và chạy. Nếu dùng môi trường ảo, chọn Python của môi trường đã cài aiocoap.
 
-**Trên workspace hiện tại**, môi trường đã được cài ở thư mục cha. Có thể chạy ngay từ `CoAP_Lab` bằng cách đặt biến ở **mỗi terminal**:
+## 5. Cách chạy từng chương trình
+
+Tất cả lệnh dưới đây thực hiện từ thư mục `CoAP_Lab`. Mỗi terminal phải dùng cùng môi trường Python đã cài aiocoap. Chạy lần lượt từng bài và nhấn **Ctrl+C** để dừng server bài trước, vì cả ba server đều dùng UDP cổng 5683.
+
+### Bài 1 gửi và nhận thông điệp CoAP
+
+Terminal 1 chạy server:
 
 ```powershell
-$pythonExe = (Resolve-Path ..\.venv\Scripts\python.exe).Path
+python bai1/coap_server_bai1.py
 ```
 
-**Trên máy cài mới theo hai lệnh phía trên**, đặt biến ở mỗi terminal như sau:
+Terminal 2 chạy client:
 
 ```powershell
-$pythonExe = (Resolve-Path .\.venv\Scripts\python.exe).Path
+python bai1/coap_client_bai1.py
 ```
 
-Các lệnh tiếp theo đều chạy từ `CoAP_Lab`. Mỗi chương trình hỗ trợ `--help`.
+Nhập họ tên và mã sinh viên khi được hỏi. Client thực hiện GET để nhận lời chào, sau đó POST thông điệp chứa nội dung chào mừng, mã sinh viên và họ tên. Server hiển thị thông điệp, thời điểm nhận và trả xác nhận.
 
-## IP cổng URI và tổ chức dữ liệu
+Ví dụ chạy bằng thông tin thành viên nhóm:
 
-| Bài | Thiết bị / tài nguyên | URI mặc định | Phương thức | Payload |
+```powershell
+python bai1/coap_client_bai1.py --name "Lê Huy Đức" --student-id B23DCCN169
+python bai1/coap_client_bai1.py --name "Trương Khánh Hợp" --student-id B23DCCN351
+```
+
+### Bài 2 mô phỏng cảm biến nhiệt độ và độ ẩm
+
+Terminal 1 chạy server:
+
+```powershell
+python bai2/sensor_server_bai2.py
+```
+
+Terminal 2 chạy client giám sát:
+
+```powershell
+python bai2/monitor_client_bai2.py
+```
+
+Server tự cập nhật nhiệt độ và độ ẩm mỗi **3 giây**. Nhiệt độ ngẫu nhiên trong khoảng 20–40 °C, độ ẩm trong khoảng 30–80 %. Client GET dữ liệu JSON mỗi **3 giây**, hiển thị mã thiết bị, nhiệt độ, độ ẩm và thời điểm nhận. Nhiệt độ **> 35 °C** hiển thị `CANH BAO: Nhiet do cao`; độ ẩm **< 40 %** hiển thị `CANH BAO: Do am thap`. Hai điều kiện được kiểm tra độc lập. Nhấn **Ctrl+C** để kết thúc giám sát.
+
+### Bài 3 giám sát và điều khiển đèn thông minh bằng CoAP Observe
+
+Terminal 1 chạy server:
+
+```powershell
+python bai3/light_server_bai3.py
+```
+
+Terminal 2 chạy client giám sát trước khi điều khiển:
+
+```powershell
+python bai3/light_monitor_bai3.py
+```
+
+Terminal 3 chạy client điều khiển:
+
+```powershell
+python bai3/light_controller_bai3.py
+```
+
+Nhập lệnh tại terminal điều khiển:
+
+| Lệnh | Chức năng |
+|---|---|
+| ON | Gửi PUT bật đèn |
+| OFF | Gửi PUT tắt đèn |
+| STATUS | Gửi GET lấy trạng thái hiện tại |
+| EXIT | Kết thúc client điều khiển |
+
+Đèn khởi tạo ở trạng thái **OFF**. Thử lần lượt `STATUS`, `ON`, `STATUS`, `OFF`, `EXIT`. Client giám sát đăng ký **CoAP Observe**, nhận trạng thái ban đầu và các thông báo khi trạng thái thực sự thay đổi; không sử dụng GET định kỳ. Có thể chạy đồng thời nhiều client giám sát. Nhấn **Ctrl+C** để dừng giám sát và server.
+
+## 6. Địa chỉ IP cổng và URI tài nguyên CoAP
+
+| Bài | Địa chỉ IP | Cổng UDP | URI | Phương thức |
 |---|---|---|---|---|
-| 1 | Thông điệp | `coap://127.0.0.1:5683/iot/lab/message` | GET, POST | Văn bản UTF-8, Content-Format 0 |
-| 2 | sensor01 / data | `coap://127.0.0.1:5683/iot/lab/sensor01/data` | GET | JSON, Content-Format 50 |
-| 3 | light01 / status | `coap://127.0.0.1:5683/iot/lab/light01/status` | GET, PUT, Observe | JSON, Content-Format 50 |
+| 1 | 127.0.0.1 | 5683 | `coap://127.0.0.1:5683/iot/lab/message` | GET, POST |
+| 2 | 127.0.0.1 | 5683 | `coap://127.0.0.1:5683/iot/lab/sensor01/data` | GET |
+| 3 | 127.0.0.1 | 5683 | `coap://127.0.0.1:5683/iot/lab/light01/status` | GET, PUT, Observe |
 
-`127.0.0.1` là địa chỉ loopback của `localhost`. Dùng IPv4 tường minh để tránh khác biệt phân giải IPv6 trên Windows. Cổng mặc định là **UDP 5683**. **Chạy lần lượt từng bài, dừng server bài trước bằng Ctrl+C** trước khi mở server bài tiếp theo vì cả ba dùng cùng địa chỉ/cổng. Muốn chạy đồng thời, truyền `--port 5684` hoặc `--port 5685` nhất quán cho server và các client tương ứng.
+`127.0.0.1` là địa chỉ IPv4 loopback tương ứng với `localhost` trong đề. Khi server và client chạy trên hai máy, thêm `--host <IPv4 máy server>` vào cả lệnh server và các lệnh client, đồng thời cho phép UDP cổng 5683 qua tường lửa máy server. Có thể đổi cổng bằng `--port`, nhưng server và client phải dùng cùng cổng. Các client dùng `--timeout 5` mặc định để giới hạn thời gian chờ phản hồi ban đầu; bài 2 tiếp tục thử ở các chu kỳ sau khi gặp lỗi.
 
-Chạy trên hai máy cùng mạng: xác định IPv4 của máy server bằng `ipconfig`, thêm `--host <IPv4-máy-server>` ở cả lệnh server và client. Máy server phải cho phép UDP cổng 5683 qua tường lửa. Server cần bind đúng địa chỉ IPv4 được gán cho máy, ví dụ `--host 192.168.1.10`.
-
-## Bài 1 gửi nhận thông điệp
-
-Terminal 1:
-
-```powershell
-& $pythonExe bai1/coap_server_bai1.py
-```
-
-Terminal 2:
-
-```powershell
-& $pythonExe bai1/coap_client_bai1.py
-```
-
-Client hỏi họ tên và mã sinh viên, gửi GET lấy lời chào rồi POST chuỗi `Xin chao tu CoAP Client - <mã sinh viên> - <họ tên>`. GET đầu tiên trả `2.05 Content`, POST thành công trả `2.04 Changed` và `Server da nhan thong diep`. Server in payload và thời điểm nhận có múi giờ.
-
-Gửi nhiều lần bằng `--count 3`. Có thể truyền `--name "Họ tên thật" --student-id "Mã sinh viên thật"` để không nhập bàn phím. Server lưu thông điệp mới nhất trong RAM; GET tiếp theo trả thông điệp đã lưu. Khởi động lại server sẽ trở về lời chào ban đầu.
-
-Log thực tế: [server](evidence/bai1_server.log), [client](evidence/bai1_client.log). Đã kiểm tra cả GET tài nguyên không tồn tại (`4.04 Not Found`), POST rỗng và UTF-8 lỗi (`4.00 Bad Request`).
-
-## Bài 2 mô phỏng cảm biến
-
-Terminal 1:
-
-```powershell
-& $pythonExe bai2/sensor_server_bai2.py
-```
-
-Terminal 2:
-
-```powershell
-& $pythonExe bai2/monitor_client_bai2.py
-```
-
-Server sinh dữ liệu ban đầu ngay khi khởi động, tự cập nhật sau mỗi **3 giây**, nhiệt độ trong **20–40 °C**, độ ẩm **30–80 %**. GET chỉ đọc dữ liệu mới nhất, không sinh lại dữ liệu. JSON gồm `device_id`, `temperature`, `humidity`, thêm `timestamp` có múi giờ.
-
-Client gửi GET theo chu kỳ **3 giây** trong điều kiện phản hồi bình thường, in mã thiết bị, nhiệt độ, độ ẩm và thời điểm nhận. Nếu yêu cầu bị timeout lâu hơn chu kỳ, chương trình chờ yêu cầu đó kết thúc trước lần tiếp theo. Mặc định theo dõi đến Ctrl+C. Cảnh báo đúng hai điều kiện độc lập:
-
-- Nhiệt độ **> 35 °C**: `CANH BAO: Nhiet do cao`.
-- Độ ẩm **< 40 %**: `CANH BAO: Do am thap`.
-- Nếu không vi phạm điều kiện nào: `Trang thai: Binh thuong`.
-
-Các mở rộng đã triển khai: timestamp, nhiều cảm biến, chọn thiết bị, ghi CSV, thống kê số GET và thời gian phản hồi trung bình. Ví dụ:
-
-```powershell
-# Terminal server
-& $pythonExe bai2/sensor_server_bai2.py --devices sensor01 sensor02 sensor03
-# Terminal client
-& $pythonExe bai2/monitor_client_bai2.py --device sensor02 --csv logs/sensor02.csv
-```
-
-Dùng `--count 3` nếu muốn tự dừng sau ba lần GET. Thống kê đếm số phản hồi CoAP thành công; client báo riêng payload JSON không hợp lệ. Log thực tế: [server](evidence/bai2_server.log), [client](evidence/bai2_client.log), [CSV](evidence/sensor_data.csv). Kiểm thử kiểm tra cả ranh giới 35 °C và 40 %, không phụ thuộc vào dữ liệu ngẫu nhiên để xác nhận cảnh báo.
-
-## Bài 3 đèn thông minh và Observe
-
-Mở ba terminal; chạy monitor trước khi điều khiển để thấy đầy đủ thay đổi.
-
-Terminal 1:
-
-```powershell
-& $pythonExe bai3/light_server_bai3.py --log logs/light_changes.jsonl
-```
-
-Terminal 2:
-
-```powershell
-& $pythonExe bai3/light_monitor_bai3.py
-```
-
-Terminal 3:
-
-```powershell
-& $pythonExe bai3/light_controller_bai3.py
-```
-
-Nhập lần lượt `STATUS`, `ON`, `STATUS`, `OFF`, `EXIT`. Trạng thái ban đầu là **OFF**. `STATUS` gửi GET, `ON/OFF` gửi PUT và in mã phản hồi. Payload PUT:
+Bài 1 dùng payload văn bản UTF-8. Bài 2 và bài 3 dùng JSON với **Content-Format 50 (application/json)**. Payload PUT điều khiển đèn:
 
 ```json
 {"device_id": "light01", "command": "ON"}
 ```
 
-Payload GET/Observe:
+Payload trạng thái GET/Observe:
 
 ```json
 {"device_id": "light01", "status": "ON"}
 ```
 
-Server kế thừa `ObservableResource`, gọi `updated_state()` khi trạng thái thực sự đổi. Monitor chỉ gửi **một GET với Observe=0 để đăng ký**, nhận trạng thái ban đầu rồi dùng `async for` trên luồng thông báo Observe. Không có vòng lặp GET định kỳ. Mở thêm nhiều terminal monitor để cùng theo dõi. PUT `ON` khi đèn đã `ON` vẫn nhận xác nhận `2.04 Changed` nhưng không phát thông báo mới.
+## 7. Kết quả đạt được và log minh chứng
 
-Monitor in mã thiết bị, trạng thái và thời điểm nhận đến Ctrl+C; khi thoát sẽ hủy Observe và đóng context. Không có timeout chờ thay đổi trạng thái vì đèn có thể đứng yên lâu; `--timeout` áp dụng lúc đăng ký ban đầu. Nếu server bị tắt đột ngột khi đèn đang đứng yên, monitor có thể vẫn chờ do chưa có gói tin mới; dùng Ctrl+C và khởi chạy lại sau khi server hoạt động.
+Các log dưới đây trích từ lần chạy thực tế trên Windows bằng Python 3.12.14, aiocoap 0.4.17, qua UDP tại `127.0.0.1:5683`.
 
-JSON lỗi, sai thiết bị hoặc lệnh khác ON/OFF trả `4.00 Bad Request`; Content-Format khác JSON trả `4.15 Unsupported Content-Format`. Client điều khiển cũng kiểm tra lệnh bàn phím trước khi gửi. Lệnh điều khiển không phân biệt chữ hoa/thường ở giao diện nhập; payload giao thức dùng đúng ON/OFF.
+### Bài 1
 
-Các mở rộng đã triển khai: nhiều observer, kiểm tra đầu vào, nhật ký JSON Lines, tùy chọn CON/NON cho controller. Mặc định dùng CON, thêm `--non` để gửi NON. Có thể chạy chuỗi lệnh không tương tác:
+Server khởi tạo thành công; client GET nhận lời chào với mã **2.05 Content**, POST thông tin sinh viên nhận mã **2.04 Changed**. Server hiển thị payload và thời điểm nhận. Đã chạy client với thông tin của cả hai thành viên.
 
-```powershell
-& $pythonExe bai3/light_controller_bai3.py --commands ON STATUS OFF EXIT
-& $pythonExe bai3/light_controller_bai3.py --non --commands STATUS EXIT
+Client của Lê Huy Đức:
+
+```text
+Sending GET request...
+URI: coap://127.0.0.1:5683/iot/lab/message
+Code: 2.05 Content
+Payload: Xin chao tu CoAP Server
+Sending POST request...
+Payload: Xin chao tu CoAP Client - B23DCCN169 - Lê Huy Đức
+Code: 2.04 Changed
+Payload: Server da nhan thong diep
 ```
 
-Log thực tế: [server](evidence/bai3_server.log), [controller ON](evidence/bai3_controller_ON.log), [controller OFF](evidence/bai3_controller_OFF.log), [monitor 1](evidence/bai3_monitor_1.log), [monitor 2](evidence/bai3_monitor_2.log), [NON](evidence/bai3_non.log), [nhật ký thay đổi](evidence/light_changes.jsonl).
+Trích log server nhận thông điệp của Trương Khánh Hợp:
 
-## Kiểm thử và minh chứng kết quả
-
-```powershell
-& $pythonExe tests/verify_lab.py
+```text
+POST request received:
+Payload: Xin chao tu CoAP Client - B23DCCN351 - Trương Khánh Hợp
+Time: 2026-10-29T14:22:32+07:00
 ```
 
-Dừng các server đang chạy trước khi kiểm thử để giải phóng UDP 5683. Bộ kiểm thử tự chạy các chương trình server/client, gửi gói CoAP thật qua loopback, kiểm tra kết quả và lưu stdout vào `evidence/`. Mỗi lần chạy ghi lại log văn bản, nối thêm CSV và JSON Lines.
+### Bài 2
 
-| Nhóm yêu cầu | Kết quả chạy |
-|---|---|
-| Bài 1 GET lời chào, POST thông tin, xác nhận, lưu thông điệp | PASS |
-| Bài 1 URI sai, UTF-8 sai, POST rỗng | PASS |
-| Bài 2 cập nhật và truy vấn 3 giây, JSON/Content-Format, CSV | PASS |
-| Bài 2 nhiều cảm biến và các ranh giới cảnh báo | PASS |
-| Bài 3 OFF ban đầu, PUT ON/OFF, GET trạng thái | PASS |
-| Bài 3 hai chương trình monitor nhận Observe đồng thời | PASS |
-| Bài 3 lặp lệnh giữ nguyên trạng thái không tạo thông báo | PASS |
-| Bài 3 JSON, thiết bị, lệnh và Content-Format không hợp lệ | PASS |
-| Bài 3 gửi NON và nhận phản hồi | PASS |
-| Cả bốn client xử lý khi không có server | PASS |
+Server trả dữ liệu mới nhất bằng JSON đúng Content-Format. Client truy vấn và nhận dữ liệu cách nhau 3 giây, phân tích và hiển thị đúng các trường, phát cảnh báo theo giá trị đo.
 
-Kết quả tổng hợp: [verification.txt](evidence/verification.txt). Log lỗi kết nối: [bài 1](evidence/timeout_bai1.log), [bài 2](evidence/timeout_bai2.log), [controller](evidence/timeout_controller.log), [Observe](evidence/timeout_observe.log).
+```text
+Code: 2.05 Content
+Payload: {"device_id": "sensor01", "temperature": 36.9, "humidity": 44.4, "timestamp": "2026-10-29T14:22:32+07:00"}
+[2026-10-29T14:22:32+07:00] Received sensor data
+Device: sensor01
+Temperature: 36.9 C
+Humidity: 44.4 %
+CANH BAO: Nhiet do cao
+------------------------------
+Code: 2.05 Content
+Payload: {"device_id": "sensor01", "temperature": 26.0, "humidity": 59.8, "timestamp": "2026-10-29T14:22:35+07:00"}
+[2026-10-29T14:22:35+07:00] Received sensor data
+Device: sensor01
+Temperature: 26.0 C
+Humidity: 59.8 %
+Trang thai: Binh thuong
+------------------------------
+```
 
-Để tự thử lỗi, dừng server và chạy client với `--timeout 2`. Client thông báo lỗi và đóng tài nguyên hoặc tiếp tục vòng giám sát ở bài 2; không hiển thị traceback cho lỗi giao tiếp dự kiến. Ctrl+C dừng các chương trình chạy liên tục. Log server trong kiểm thử được đóng bằng terminate của tiến trình kiểm thử; khi chạy thủ công dùng Ctrl+C để thực hiện đóng context theo luồng bình thường.
+Kiểm tra thêm các ranh giới cảnh báo: 35 °C và 40 % không cảnh báo; 35.1 °C phát cảnh báo nhiệt độ cao; 39.9 % phát cảnh báo độ ẩm thấp; nếu cùng vi phạm sẽ hiển thị cả hai cảnh báo.
 
-## Đối chiếu đề và phạm vi mở rộng
+### Bài 3
 
-Đã triển khai đầy đủ các mục Yêu cầu và Đánh giá của cả ba bài, đúng 7 chương trình và README có log minh chứng. Các mục “Gợi ý mở rộng” là tùy chọn trong đề. Bản này đã thêm lưu thông điệp gần nhất, nhiều POST, lỗi 4.04/timeout, timestamp cảm biến, nhiều cảm biến, CSV, thống kê GET, nhiều observer, kiểm tra lệnh, nhật ký trạng thái và CON/NON. Phần gợi ý mô phỏng thêm fan01/pump01 không được triển khai; bài 3 giữ thiết bị light01 theo yêu cầu chính.
+Controller GET/PUT thành công, đèn chuyển **OFF → ON → OFF**. Hai client giám sát cùng đăng ký Observe và nhận được thông báo. Gửi lại lệnh giữ nguyên trạng thái không tạo thông báo mới.
 
-## Nộp bài qua GitHub
+Trích log controller bật đèn và truy vấn trạng thái:
 
-Repository nộp bài: https://github.com/Djicz/IoT_ThucHanh_3. Bộ bài làm nằm trong thư mục `CoAP_Lab`, gồm mã nguồn, `common.py`, `requirements.txt`, `README.md`, `tests/` và `evidence/`. Không đưa môi trường `.venv` vào Git. Điền thông tin sinh viên/nhóm ở đầu README và chạy bài 1 với thông tin thật trước khi gửi URL repository cho giảng viên.
+```text
+Sending PUT request...
+Code: 2.04 Changed
+Payload: {"device_id": "light01", "status": "ON"}
+Da bat den light01
+Sending GET request...
+Code: 2.05 Content
+Payload: {"device_id": "light01", "status": "ON"}
+```
 
-## Tài liệu tham khảo
+Log client giám sát:
 
-- Đề thực hành: `Thực hành buổi 3 python coap.docx` trong thư mục workspace cha.
-- [Ví dụ chính thức aiocoap](https://aiocoap.readthedocs.io/en/latest/examples.html).
-- [ObservableResource và updated_state](https://aiocoap.readthedocs.io/en/latest/module/aiocoap.resource.html).
+```text
+Registering CoAP Observe...
+[2026-10-29T14:22:39+07:00] Initial State
+Device: light01
+Status: OFF
+Observe registration successful
+[2026-10-29T14:22:40+07:00] State Updated
+Device: light01
+Status: ON
+[2026-10-29T14:22:40+07:00] State Updated
+Device: light01
+Status: OFF
+```
+
+### Xử lý lỗi
+
+Đã kiểm tra URI không tồn tại trả **4.04 Not Found**; POST rỗng hoặc sai UTF-8 trả **4.00 Bad Request**; PUT đèn có JSON, mã thiết bị hoặc lệnh sai trả **4.00 Bad Request**; sai Content-Format trả **4.15 Unsupported Content-Format**. Client điều khiển báo lỗi nếu nhập lệnh ngoài ON/OFF/STATUS/EXIT. Cả bốn client xử lý được lỗi giao tiếp khi server không hoạt động.
+
+Trích log client giám sát khi không có server:
+
+```text
+Loi ket noi/timeout: NetworkError: Network error: NetworkError
+GET requests: 1; responses: 0; average response: 0.0000 s
+```
