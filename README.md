@@ -41,7 +41,7 @@ Mỗi file Python là một chương trình chạy độc lập. Minh chứng ch
 
 ## 4. Cách cài đặt môi trường
 
-Cài Python 3.10 trở lên, chọn thêm Python vào PATH khi cài trên Windows. Tải hoặc clone repository, mở terminal tại thư mục `CoAP_Lab` rồi chạy:
+Cài Python 3.10 trở lên, chọn thêm Python vào PATH khi cài trên Windows. Tải hoặc clone repository, mở terminal tại thư mục `IoT_ThucHanh_3` rồi chạy:
 
 ```powershell
 python --version
@@ -52,7 +52,7 @@ Nếu máy dùng Python Launcher, có thể thay `python` bằng `py -3` trong c
 
 ## 5. Cách chạy từng chương trình
 
-Tất cả lệnh dưới đây thực hiện từ thư mục `CoAP_Lab`. Mỗi terminal phải dùng cùng môi trường Python đã cài aiocoap. Chạy lần lượt từng bài và nhấn **Ctrl+C** để dừng server bài trước, vì cả ba server đều dùng UDP cổng 5683.
+Tất cả lệnh dưới đây thực hiện từ thư mục `IoT_ThucHanh_3`. Mỗi terminal phải dùng cùng môi trường Python đã cài aiocoap. Chạy lần lượt từng bài và nhấn **Ctrl+C** để dừng server bài trước, vì cả ba server đều dùng UDP cổng 5683.
 
 ### Bài 1 gửi và nhận thông điệp CoAP
 
