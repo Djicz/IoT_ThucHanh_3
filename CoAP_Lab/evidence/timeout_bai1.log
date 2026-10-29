@@ -1,0 +1,6 @@
+Sending GET request...
+URI: coap://127.0.0.1:5689/iot/lab/message
+Loi ket noi/timeout: NetworkError: Network error: NetworkError
+Sending POST request...
+Payload: Xin chao tu CoAP Client - TEST001 - Test
+Loi ket noi/timeout: TimeoutError:

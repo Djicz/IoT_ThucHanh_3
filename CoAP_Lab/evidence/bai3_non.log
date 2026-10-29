@@ -1,0 +1,3 @@
+Sending GET request...
+Code: 2.05 Content
+Payload: {"device_id": "light01", "status": "OFF"}

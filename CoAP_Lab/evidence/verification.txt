@@ -1,0 +1,7 @@
+Python: 3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]
+aiocoap: 0.4.17
+Transport: IPv4 UDP, 127.0.0.1:5683
+PASS bai1: GET greeting, repeated POST, latest message, 4.04, invalid UTF-8/empty POST
+PASS bai2: 3-second updates/polling, JSON format 50, two sensors, CSV, strict alert boundaries
+PASS bai3: initial OFF, GET/PUT ON/OFF, real Observe to two monitors, no duplicate notification, invalid JSON/device/command/format, NON
+PASS connection errors: all four clients exit cleanly when server is absent

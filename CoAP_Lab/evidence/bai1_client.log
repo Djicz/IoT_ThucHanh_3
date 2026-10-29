@@ -1,0 +1,12 @@
+Sending GET request...
+URI: coap://127.0.0.1:5683/iot/lab/message
+Code: 2.05 Content
+Payload: Xin chao tu CoAP Server
+Sending POST request...
+Payload: Xin chao tu CoAP Client - TEST001 - Sinh vien kiem thu
+Code: 2.04 Changed
+Payload: Server da nhan thong diep
+Sending POST request...
+Payload: Xin chao tu CoAP Client - TEST001 - Sinh vien kiem thu
+Code: 2.04 Changed
+Payload: Server da nhan thong diep

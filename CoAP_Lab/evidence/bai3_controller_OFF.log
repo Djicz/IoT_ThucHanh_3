@@ -1,0 +1,8 @@
+Lenh khong hop le. Chi dung ON/OFF/STATUS/EXIT.
+Sending PUT request...
+Code: 2.04 Changed
+Payload: {"device_id": "light01", "status": "OFF"}
+Da tat den light01
+Sending GET request...
+Code: 2.05 Content
+Payload: {"device_id": "light01", "status": "OFF"}
