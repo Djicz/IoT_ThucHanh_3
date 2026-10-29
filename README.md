@@ -12,7 +12,7 @@ Repository nộp bài: [Djicz/IoT_ThucHanh_3](https://github.com/Djicz/IoT_ThucH
 ## 2. Cấu trúc thư mục
 
 ```text
-CoAP_Lab/
+IoT_ThucHanh_3/
 |
 |-- bai1/
 |   |-- coap_server_bai1.py
